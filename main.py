@@ -41,7 +41,7 @@ push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownlo
 class Ui_MainWindow(object):
         def setupUi(self, MainWindow):
                 MainWindow.setObjectName(u"MainWindow")
-                MainWindow.resize(792, 590)
+                MainWindow.setFixedSize(792, 590)
                 self.centralwidget = QWidget(MainWindow)
                 self.centralwidget.setObjectName(u"centralwidget")
                 self.label_directory = QLabel(self.centralwidget)
@@ -116,11 +116,11 @@ class Ui_MainWindow(object):
                 self.check_box_select_all.setObjectName(u"check_box_select_all")
                 self.check_box_select_all.setGeometry(QRect(20, 10, 16, 20))
                 self.check_box_select_all.setChecked(False)
+                self.check_box_select_all.setText("")
+
                 self.label_album_header = QLabel(tab_widget_objects)
                 self.label_album_header.setObjectName(u"label_album_header")
                 self.label_album_header.setGeometry(QRect(50, 10, 49, 16))
-
-                self.check_box_select_all.setText("")
                 self.label_album_header.setText(u"Album")
 
                 self.push_button_first = QPushButton(tab_widget_objects)
@@ -165,29 +165,26 @@ class Ui_MainWindow(object):
                 self.tab_widget.addTab(tab_widget_objects, "")
 
         def create_tab_scrollable_content():
-               return
-        #        for x in range():
-        #                test_dict = {}
-        #                self.check_box_album_x = QCheckBox(self.scrollAreaWidgetContents)
-        #                self.check_box_album_x.setObjectName(u"check_box_album_1")
-        #                self.check_box_album_x.setGeometry(QRect(20, 20, 16, 20))
-        #                self.check_box_album_x.setText("")
+                return
+               #widgets_scrollable_dictionary = {}
+        #        for i in range(len(temp_var)):
+        #                widgets_scrollable_dictionary[(i, 0)] = QCheckBox(tab_widget_objects)
+        #                widgets_scrollable_dictionary[(i, 0)].setGeometry(QRect(20, 10, 16, 20))
+        #                widgets_scrollable_dictionary[(i, 0)].setText("")
 
-        #                self.label_album_x = QLabel(self.tab_widget_tab_downloaded)
-        #                self.label_album_x.setObjectName(u"label_album_1")
-        #                self.label_album_x.setGeometry(QRect(51, 51, 171, 16))
-        #                self.label_album_x.setText(u"Album Name")
+        #                widgets_scrollable_dictionary[(i, 1)] = QLabel(tab_widget_objects)
+        #                widgets_scrollable_dictionary[(i, 1)].setText(temp_var_album_names)
+        #                widgets_scrollable_dictionary[(i, 1)].setGeometry(QRect(51, 51, 171, 16))
 
         def create_tab_scrollable_content_download():
                 return
-        #        self.progress_bar_album_1 = QProgressBar(self.scrollAreaWidgetContents_2)
-        #        self.progress_bar_album_1.setObjectName(u"progress_bar_album_1")
-        #        self.progress_bar_album_1.setGeometry(QRect(260, 20, 151, 20))
-        #        self.progress_bar_album_1.setValue(24)
-        #        self.label_estimated_time_1 = QLabel(self.scrollAreaWidgetContents_2)
-        #        self.label_estimated_time_1.setObjectName(u"label_estimated_time_1")
-        #        self.label_estimated_time_1.setGeometry(QRect(430, 20, 41, 16))
-        #        self.label_estimated_time_1.setText(u"00:11:11")        
+        #        widgets_scrollable_dictionary[(i, 2)] = QProgressBar(tab_widget_objects)
+        #        widgets_scrollable_dictionary[(i, 2)].setGeometry(QRect(260, 20, 151, 20))
+        #        widgets_scrollable_dictionary[(i, 2)].setValue(1)
+
+        #        widgets_scrollable_dictionary[(i, 3)] = QLabel(tab_widget_objects)
+        #        widgets_scrollable_dictionary[(i, 3)].setGeometry(QRect(430, 20, 41, 16))
+        #        widgets_scrollable_dictionary[(i, 3)].setText(u"00:11:11")
 
 if __name__ == "__main__":
     import sys
