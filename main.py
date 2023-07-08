@@ -8,9 +8,7 @@ import PIL
 import pylrc
 
 from PySide6.QtCore import (QRect, Qt)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel,
-        QMainWindow, QProgressBar, QPushButton, QScrollArea,
-        QTabWidget, QWidget, QFileDialog)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QFileDialog, QGridLayout)
 
 def initialise_json():
         return
@@ -25,6 +23,18 @@ def button_add_download():
         return
 
 def button_download():
+        return
+
+def box_select_all():
+        return
+
+def box_instrumental():
+        return
+
+def box_lyrics():
+        return
+
+def box_cover():
         return
 
 push_button_dictionary = {
@@ -93,11 +103,10 @@ class Ui_MainWindow(object):
                 self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_removed), u"Removed")
 
                 MainWindow.setCentralWidget(self.centralwidget)
-
                 self.tab_widget.setCurrentIndex(1)
 
         def select_directory(self):
-                file_explorer = QFileDialog.getExistingDirectory(MainWindow, 'Open Folder', '')
+                file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
                 if os.path.isdir(file_explorer):
                         self.label_directory.setText(file_explorer)
                         os.chdir(file_explorer)
@@ -105,11 +114,13 @@ class Ui_MainWindow(object):
         def create_tab_layout_base(self, tab_widget_objects, index):
                 self.scrollArea = QScrollArea(tab_widget_objects)
                 self.scrollArea.setObjectName(u"scrollArea")
-                self.scrollArea.setGeometry(QRect(0, 30, 531, 371))
                 self.scrollArea.setWidgetResizable(True)
+                self.scrollArea.setGeometry(QRect(0, 30, 531, 371))
                 self.scrollAreaWidgetContents = QWidget()
                 self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
                 self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 529, 369))
+                self.widgets_layout = QGridLayout()
+                self.scrollAreaWidgetContents.setLayout(self.widgets_layout)
                 self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
                 self.check_box_select_all = QCheckBox(tab_widget_objects)
@@ -117,10 +128,11 @@ class Ui_MainWindow(object):
                 self.check_box_select_all.setGeometry(QRect(20, 10, 16, 20))
                 self.check_box_select_all.setChecked(False)
                 self.check_box_select_all.setText("")
+                self.check_box_select_all.clicked.connect(box_select_all)
 
                 self.label_album_header = QLabel(tab_widget_objects)
                 self.label_album_header.setObjectName(u"label_album_header")
-                self.label_album_header.setGeometry(QRect(50, 10, 49, 16))
+                self.label_album_header.setGeometry(QRect(60, 10, 49, 16))
                 self.label_album_header.setText(u"Album")
 
                 self.push_button_first = QPushButton(tab_widget_objects)
@@ -139,52 +151,56 @@ class Ui_MainWindow(object):
                         if index == 2:
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setObjectName(u"label_progress_header")
-                                self.label_progress_header.setGeometry(QRect(260, 10, 51, 16))
+                                self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
                                 self.label_progress_header.setText(u"Progress")
-
-                                self.label_estimated_time_header = QLabel(tab_widget_objects)
-                                self.label_estimated_time_header.setObjectName(u"label_estimated_time_header")
-                                self.label_estimated_time_header.setGeometry(QRect(430, 10, 91, 16))
-                                self.label_estimated_time_header.setText(u"Estimated Time")
 
                                 self.check_box_instrumental = QCheckBox(tab_widget_objects)
                                 self.check_box_instrumental.setObjectName(u"check_box_instrumental")
                                 self.check_box_instrumental.setGeometry(QRect(20, 420, 91, 20))
                                 self.check_box_instrumental.setText(u"Instrumentals")
+                                self.check_box_instrumental.clicked.connect(box_instrumental)
 
                                 self.check_box_lyrics = QCheckBox(tab_widget_objects)
                                 self.check_box_lyrics.setObjectName(u"check_box_lyrics")
                                 self.check_box_lyrics.setGeometry(QRect(140, 420, 51, 20))
                                 self.check_box_lyrics.setText(u"Lyrics")
+                                self.check_box_lyrics.clicked.connect(box_lyrics)
 
                                 self.check_box_cover = QCheckBox(tab_widget_objects)
                                 self.check_box_cover.setObjectName(u"check_box_cover")
                                 self.check_box_cover.setGeometry(QRect(220, 420, 51, 20))
                                 self.check_box_cover.setText(u"Cover")
+                                self.check_box_cover.clicked.connect(box_cover)
 
                 self.tab_widget.addTab(tab_widget_objects, "")
+                self.create_tab_scrollable_content(tab_widget_objects)
+                if index == 2:
+                        self.create_tab_scrollable_content_download(tab_widget_objects)
 
-        def create_tab_scrollable_content():
-                return
-               #widgets_scrollable_dictionary = {}
-        #        for i in range(len(temp_var)):
-        #                widgets_scrollable_dictionary[(i, 0)] = QCheckBox(tab_widget_objects)
-        #                widgets_scrollable_dictionary[(i, 0)].setGeometry(QRect(20, 10, 16, 20))
-        #                widgets_scrollable_dictionary[(i, 0)].setText("")
+        def create_tab_scrollable_content(self, tab_widget_objects):
+                global widgets_scrollable_dictionary
+                widgets_scrollable_dictionary = {}
 
-        #                widgets_scrollable_dictionary[(i, 1)] = QLabel(tab_widget_objects)
-        #                widgets_scrollable_dictionary[(i, 1)].setText(temp_var_album_names)
-        #                widgets_scrollable_dictionary[(i, 1)].setGeometry(QRect(51, 51, 171, 16))
+                for i in range(50):  # temporary value
+                        widgets_scrollable_dictionary[(i, 0)] = QCheckBox(tab_widget_objects)
+                        widgets_scrollable_dictionary[(i, 0)].setText("")
+                        widgets_scrollable_dictionary[(i, 0)].setFixedSize(25, 25)
 
-        def create_tab_scrollable_content_download():
-                return
-        #        widgets_scrollable_dictionary[(i, 2)] = QProgressBar(tab_widget_objects)
-        #        widgets_scrollable_dictionary[(i, 2)].setGeometry(QRect(260, 20, 151, 20))
-        #        widgets_scrollable_dictionary[(i, 2)].setValue(1)
+                        widgets_scrollable_dictionary[(i, 1)] = QLabel(tab_widget_objects)
+                        widgets_scrollable_dictionary[(i, 1)].setText("Temporary album name text " + str(i))
+                        widgets_scrollable_dictionary[(i, 1)].setFixedSize(432, 25)
 
-        #        widgets_scrollable_dictionary[(i, 3)] = QLabel(tab_widget_objects)
-        #        widgets_scrollable_dictionary[(i, 3)].setGeometry(QRect(430, 20, 41, 16))
-        #        widgets_scrollable_dictionary[(i, 3)].setText(u"00:11:11")
+                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 0)], i, 0)
+                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 1)], i, 1)
+
+        def create_tab_scrollable_content_download(self, tab_widget_objects):
+                for i in range(50):  # temporary value
+                        widgets_scrollable_dictionary[(i, 1)].setFixedSize(255, 25)
+                        widgets_scrollable_dictionary[(i, 2)] = QProgressBar(tab_widget_objects)
+                        widgets_scrollable_dictionary[(i, 2)].setValue(50)
+                        widgets_scrollable_dictionary[(i, 2)].setFixedSize(160, 25)
+
+                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 2)], i, 2)
 
 if __name__ == "__main__":
     import sys
