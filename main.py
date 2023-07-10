@@ -10,8 +10,46 @@ import pylrc
 from PySide6.QtCore import (QRect, Qt)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QFileDialog, QGridLayout)
 
+json_path_list = ["all_albums.json", "downloaded_albums.json", "removed_albums.json", "downloading_albums.json", "not_downloaded_albums.json"]
+
+def api_get_albums(): 
+        global api_monster_siren_albums_data
+        api_monster_siren_albums_data = []
+        s = requests.session()
+        api_monster_siren_albums_data_raw = s.get("https://monster-siren.hypergryph.com/api/albums", headers={'Content-Type': 'application/json'}).json()['data']
+
+        for i in api_monster_siren_albums_data_raw:
+                api_monster_siren_albums_data.append([i['cid'], i['name']])
+
 def initialise_json():
-        return
+        if os.path.exists(json_path_list[0]) == False:
+                with open(json_path_list[0], "w", encoding="utf-8") as f:
+                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
+
+        if os.path.exists(json_path_list[4]) == False:
+                with open(json_path_list[4], "w", encoding="utf-8") as f:
+                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
+
+        for json_path in json_path_list:
+                if os.path.exists(json_path) == False:
+                        json_create = open(json_path, "x", encoding="utf8")
+
+def check_new_albums(data):
+        with open(json_path_list[0], "r", encoding="utf8") as all_albums_list:
+                for i in data:
+                        if i in all_albums_list.read():
+                                return False
+                        else:
+                                return True
+                
+def update_albums_list():
+        all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
+        with open(json_path_list[0], "a", encoding="utf-8") as f, open(json_path_list[4], "a", encoding="utf-8") as f2:
+                for i in all_albums_list_missing:
+                        json.dump(i, f, ensure_ascii=False)
+                        json.dump(i, f2, ensure_ascii=False)
+
+
 
 def button_remove():
         return
@@ -104,6 +142,10 @@ class Ui_MainWindow(object):
 
                 MainWindow.setCentralWidget(self.centralwidget)
                 self.tab_widget.setCurrentIndex(1)
+
+                api_get_albums()
+                initialise_json()
+                update_albums_list()
 
         def select_directory(self):
                 file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
