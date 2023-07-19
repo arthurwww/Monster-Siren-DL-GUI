@@ -10,7 +10,7 @@ import pylrc
 from PySide6.QtCore import (QRect, Qt)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QFileDialog, QGridLayout)
 
-json_path_list = ["all_albums.json", "downloaded_albums.json", "removed_albums.json", "downloading_albums.json", "not_downloaded_albums.json"]
+json_path_list = ["downloaded_albums.json", "not_downloaded_albums.json", "downloading_albums.json", "removed_albums.json", "all_albums.json"]
 
 def api_get_albums(): 
         global api_monster_siren_albums_data
@@ -22,12 +22,12 @@ def api_get_albums():
                 api_monster_siren_albums_data.append([i['cid'], i['name']])
 
 def initialise_json():
-        if os.path.exists(json_path_list[0]) == False:
-                with open(json_path_list[0], "w", encoding="utf-8") as f:
-                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
-
         if os.path.exists(json_path_list[4]) == False:
                 with open(json_path_list[4], "w", encoding="utf-8") as f:
+                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
+
+        if os.path.exists(json_path_list[1]) == False:
+                with open(json_path_list[1], "w", encoding="utf-8") as f:
                         json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
 
         for json_path in json_path_list:
@@ -35,7 +35,7 @@ def initialise_json():
                         json_create = open(json_path, "x", encoding="utf8")
 
 def check_new_albums(data):
-        with open(json_path_list[0], "r", encoding="utf8") as all_albums_list:
+        with open(json_path_list[4], "r", encoding="utf8") as all_albums_list:
                 for i in data:
                         if i in all_albums_list.read():
                                 return False
@@ -44,12 +44,10 @@ def check_new_albums(data):
                 
 def update_albums_list():
         all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
-        with open(json_path_list[0], "a", encoding="utf-8") as f, open(json_path_list[4], "a", encoding="utf-8") as f2:
+        with open(json_path_list[4], "a", encoding="utf-8") as f, open(json_path_list[1], "a", encoding="utf-8") as f2:
                 for i in all_albums_list_missing:
                         json.dump(i, f, ensure_ascii=False)
                         json.dump(i, f2, ensure_ascii=False)
-
-
 
 def button_remove():
         return
@@ -63,8 +61,15 @@ def button_add_download():
 def button_download():
         return
 
-def box_select_all():
-        return
+def box_select_all(self, index):          # keyerror fix later
+        with open (json_path_list[index], encoding="utf-8") as f:
+                y = json.load(f)
+                if self.check_box_select_all.isChecked():
+                        for i in range(len(y)):
+                                widgets_scrollable_dictionary[index][(i, 0)].setChecked(True)
+                else:
+                        for i in range(len(y)):
+                                widgets_scrollable_dictionary[index][(i, 0)].setChecked(False)
 
 def box_instrumental():
         return
@@ -170,7 +175,9 @@ class Ui_MainWindow(object):
                 self.check_box_select_all.setGeometry(QRect(20, 10, 16, 20))
                 self.check_box_select_all.setChecked(False)
                 self.check_box_select_all.setText("")
-                self.check_box_select_all.clicked.connect(box_select_all)
+                self.check_box_select_all.clicked.connect(lambda : box_select_all(self, index))
+                if os.stat(json_path_list[index]).st_size == 0:
+                        self.check_box_select_all.setDisabled(True)
 
                 self.label_album_header = QLabel(tab_widget_objects)
                 self.label_album_header.setObjectName(u"label_album_header")
@@ -215,34 +222,48 @@ class Ui_MainWindow(object):
                                 self.check_box_cover.clicked.connect(box_cover)
 
                 self.tab_widget.addTab(tab_widget_objects, "")
-                self.create_tab_scrollable_content(tab_widget_objects)
+                self.create_tab_scrollable_content(tab_widget_objects, index)
                 if index == 2:
-                        self.create_tab_scrollable_content_download(tab_widget_objects)
+                        self.create_tab_scrollable_content_download(tab_widget_objects, index)
+                print(widgets_scrollable_dictionary)
 
-        def create_tab_scrollable_content(self, tab_widget_objects):
+        def create_tab_scrollable_content(self, tab_widget_objects, index):
                 global widgets_scrollable_dictionary
-                widgets_scrollable_dictionary = {}
+                widgets_scrollable_dictionary = {index:{}}
 
-                for i in range(50):  # temporary value
-                        widgets_scrollable_dictionary[(i, 0)] = QCheckBox(tab_widget_objects)
-                        widgets_scrollable_dictionary[(i, 0)].setText("")
-                        widgets_scrollable_dictionary[(i, 0)].setFixedSize(25, 25)
+                if os.stat(json_path_list[index]).st_size == 0:
+                        return
 
-                        widgets_scrollable_dictionary[(i, 1)] = QLabel(tab_widget_objects)
-                        widgets_scrollable_dictionary[(i, 1)].setText("Temporary album name text " + str(i))
-                        widgets_scrollable_dictionary[(i, 1)].setFixedSize(432, 25)
+                try:
+                        with open (json_path_list[index], encoding="utf-8") as f:
+                                y = json.load(f)
+                                for i in range(len(y)):
+                                        widgets_scrollable_dictionary[index][(i, 0)] = QCheckBox(tab_widget_objects)
+                                        widgets_scrollable_dictionary[index][(i, 0)].setText("")
+                                        widgets_scrollable_dictionary[index][(i, 0)].setFixedSize(25, 25)
 
-                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 0)], i, 0)
-                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 1)], i, 1)
+                                        widgets_scrollable_dictionary[index][(i, 1)] = QLabel(tab_widget_objects)
+                                        widgets_scrollable_dictionary[index][(i, 1)].setText(str(y[i][1]))
+                                        widgets_scrollable_dictionary[index][(i, 1)].setFixedSize(432, 25)
 
-        def create_tab_scrollable_content_download(self, tab_widget_objects):
-                for i in range(50):  # temporary value
-                        widgets_scrollable_dictionary[(i, 1)].setFixedSize(255, 25)
-                        widgets_scrollable_dictionary[(i, 2)] = QProgressBar(tab_widget_objects)
-                        widgets_scrollable_dictionary[(i, 2)].setValue(50)
-                        widgets_scrollable_dictionary[(i, 2)].setFixedSize(160, 25)
+                                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 0)], i, 0)
+                                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 1)], i, 1)
+                except:
+                        return
 
-                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[(i, 2)], i, 2)
+        def create_tab_scrollable_content_download(self, tab_widget_objects, index):
+                if os.stat(json_path_list[index]).st_size == 0:
+                        return
+                
+                with open (json_path_list[index], encoding="utf-8") as f:
+                        y = json.load(f)
+                        for i in range(len(y)):
+                                widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(255, 25)
+                                widgets_scrollable_dictionary[index][(i, 2)] = QProgressBar(tab_widget_objects)
+                                widgets_scrollable_dictionary[index][(i, 2)].setValue(50)
+                                widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(160, 25)
+
+                                self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
 
 if __name__ == "__main__":
     import sys
