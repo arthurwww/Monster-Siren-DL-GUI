@@ -12,6 +12,11 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWin
 
 json_path_list = ["downloaded_albums.json", "not_downloaded_albums.json", "downloading_albums.json", "removed_albums.json", "all_albums.json"]
 
+widgets_scrollable_dictionary = {0:{},
+                                1:{},
+                                2:{},
+                                3:{}}
+
 def api_get_albums(): 
         global api_monster_siren_albums_data
         api_monster_siren_albums_data = []
@@ -61,16 +66,20 @@ def button_add_download():
 def button_download():
         return
 
-def box_select_all(self, index):          # keyerror fix later
-        with open (json_path_list[index], encoding="utf-8") as f:
-                y = json.load(f)
-                if self.check_box_select_all.isChecked():
+def box_select_all(self, index):
+        try:
+                with open (json_path_list[index], encoding="utf-8") as f:
+                        y = json.load(f)
+
+                if self.check_box_select_all.isChecked():   # state issue
                         for i in range(len(y)):
-                                widgets_scrollable_dictionary[index][(i, 0)].setChecked(True)
+                                widgets_scrollable_dictionary[index][(i, 0)].setCheckState(Qt.Checked)
                 else:
                         for i in range(len(y)):
-                                widgets_scrollable_dictionary[index][(i, 0)].setChecked(False)
-
+                                widgets_scrollable_dictionary[index][(i, 0)].setCheckState(Qt.Unchecked)
+        except:
+                return
+                                
 def box_instrumental():
         return
 
@@ -176,8 +185,6 @@ class Ui_MainWindow(object):
                 self.check_box_select_all.setChecked(False)
                 self.check_box_select_all.setText("")
                 self.check_box_select_all.clicked.connect(lambda : box_select_all(self, index))
-                if os.stat(json_path_list[index]).st_size == 0:
-                        self.check_box_select_all.setDisabled(True)
 
                 self.label_album_header = QLabel(tab_widget_objects)
                 self.label_album_header.setObjectName(u"label_album_header")
@@ -225,12 +232,8 @@ class Ui_MainWindow(object):
                 self.create_tab_scrollable_content(tab_widget_objects, index)
                 if index == 2:
                         self.create_tab_scrollable_content_download(tab_widget_objects, index)
-                print(widgets_scrollable_dictionary)
 
         def create_tab_scrollable_content(self, tab_widget_objects, index):
-                global widgets_scrollable_dictionary
-                widgets_scrollable_dictionary = {index:{}}
-
                 if os.stat(json_path_list[index]).st_size == 0:
                         return
 
