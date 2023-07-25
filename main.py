@@ -54,24 +54,28 @@ def update_albums_list():
                         json.dump(i, f, ensure_ascii=False)
                         json.dump(i, f2, ensure_ascii=False)
 
-def button_remove():
+def button_remove(index):         # work on this next    /            /           /           /           /
+        try:
+                for i in range(widgets_scrollable_dictionary[index]):
+                        if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                return
+        except: 
+                return
+
+def button_re_add(index):
         return
 
-def button_re_add():
+def button_add_download(index):
         return
 
-def button_add_download():
+def button_download(index):
         return
 
-def button_download():
-        return
-
-def box_select_all(self, index):
+def box_select_all(index):
         try:
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
-
-                if self.check_box_select_all.isChecked():   # state issue
+                if check_box_select_all_dictionary[index].isChecked():
                         for i in range(len(y)):
                                 widgets_scrollable_dictionary[index][(i, 0)].setCheckState(Qt.Checked)
                 else:
@@ -100,14 +104,15 @@ push_button_dictionary = {
 
 push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownload", "Download"]
 
+check_box_select_all_dictionary = {}
+push_button_one_dictionary = {}
+push_button_two_dictionary = {}
+
 class Ui_MainWindow(object):
         def setupUi(self, MainWindow):
-                MainWindow.setObjectName(u"MainWindow")
                 MainWindow.setFixedSize(792, 590)
                 self.centralwidget = QWidget(MainWindow)
-                self.centralwidget.setObjectName(u"centralwidget")
                 self.label_directory = QLabel(self.centralwidget)
-                self.label_directory.setObjectName(u"label_directory")
                 self.label_directory.setGeometry(QRect(100, 40, 491, 21))
                 self.label_directory.setFrameShape(QFrame.Box)
                 self.label_directory.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
@@ -116,13 +121,11 @@ class Ui_MainWindow(object):
                 self.label_directory.setText(u"")
 
                 self.push_button_directory = QPushButton(self.centralwidget)
-                self.push_button_directory.setObjectName(u"push_button_directory")
                 self.push_button_directory.setGeometry(QRect(600, 38, 111, 24))
                 self.push_button_directory.clicked.connect(self.select_directory)
                 self.push_button_directory.setText(u"Select Directory")
 
                 self.tab_widget = QTabWidget(self.centralwidget)
-                self.tab_widget.setObjectName(u"tab_widget")
                 self.tab_widget.setGeometry(QRect(70, 80, 651, 461))
                 self.tab_widget.setContextMenuPolicy(Qt.NoContextMenu)
                 self.tab_widget.setLayoutDirection(Qt.LeftToRight)
@@ -135,22 +138,18 @@ class Ui_MainWindow(object):
                 self.tab_widget.setTabBarAutoHide(False)
                 
                 self.tab_widget_tab_downloaded = QWidget()
-                self.tab_widget_tab_downloaded.setObjectName(u"tab_widget_tab_downloaded")
                 self.create_tab_layout_base(self.tab_widget_tab_downloaded, 0)
                 self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloaded), u"Downloaded")
 
                 self.tab_widget_tab_not_downloaded = QWidget()
-                self.tab_widget_tab_not_downloaded.setObjectName(u"tab_widget_tab_not_downloaded")
                 self.create_tab_layout_base(self.tab_widget_tab_not_downloaded, 1)
                 self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_not_downloaded), u"Not Downloaded")
 
                 self.tab_widget_tab_downloading = QWidget()
-                self.tab_widget_tab_downloading.setObjectName(u"tab_widget_tab_downloading")
                 self.create_tab_layout_base(self.tab_widget_tab_downloading, 2)
                 self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloading), u"Downloading")
 
                 self.tab_widget_tab_removed = QWidget()
-                self.tab_widget_tab_removed.setObjectName(u"tab_widget_tab_removed")
                 self.create_tab_layout_base(self.tab_widget_tab_removed, 3)
                 self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_removed), u"Removed")
 
@@ -165,65 +164,63 @@ class Ui_MainWindow(object):
                 file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
                 if os.path.isdir(file_explorer):
                         self.label_directory.setText(file_explorer)
-                        os.chdir(file_explorer)
+                        #os.chdir(file_explorer)
 
         def create_tab_layout_base(self, tab_widget_objects, index):
                 self.scrollArea = QScrollArea(tab_widget_objects)
-                self.scrollArea.setObjectName(u"scrollArea")
                 self.scrollArea.setWidgetResizable(True)
                 self.scrollArea.setGeometry(QRect(0, 30, 531, 371))
                 self.scrollAreaWidgetContents = QWidget()
-                self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
                 self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 529, 369))
                 self.widgets_layout = QGridLayout()
                 self.scrollAreaWidgetContents.setLayout(self.widgets_layout)
                 self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-                self.check_box_select_all = QCheckBox(tab_widget_objects)
-                self.check_box_select_all.setObjectName(u"check_box_select_all")
-                self.check_box_select_all.setGeometry(QRect(20, 10, 16, 20))
-                self.check_box_select_all.setChecked(False)
-                self.check_box_select_all.setText("")
-                self.check_box_select_all.clicked.connect(lambda : box_select_all(self, index))
+                check_box_select_all_dictionary[index] = QCheckBox(tab_widget_objects)
+                check_box_select_all_dictionary[index].setGeometry(QRect(20, 10, 16, 20))
+                check_box_select_all_dictionary[index].setChecked(False)
+                check_box_select_all_dictionary[index].setText("")
+                check_box_select_all_dictionary[index].clicked.connect(lambda : box_select_all(index))
 
                 self.label_album_header = QLabel(tab_widget_objects)
-                self.label_album_header.setObjectName(u"label_album_header")
                 self.label_album_header.setGeometry(QRect(60, 10, 49, 16))
                 self.label_album_header.setText(u"Album")
 
-                self.push_button_first = QPushButton(tab_widget_objects)
-                self.push_button_first.setObjectName(u"push_button_first")
-                self.push_button_first.setGeometry(QRect(540, 40, 75, 48))
-                self.push_button_first.clicked.connect(push_button_dictionary.get(index))
-                self.push_button_first.setText(push_button_text_list[index])
+                push_button_one_dictionary[index] = QPushButton(tab_widget_objects)
+                push_button_one_dictionary[index].setGeometry(QRect(540, 40, 75, 48))
+                push_button_one_dictionary[index].setText(push_button_text_list[index])
+
+                if index == 0 or index == 1 or index == 2:
+                        push_button_one_dictionary[index].clicked.connect(button_remove(index))
+                else:
+                        push_button_one_dictionary[index].clicked.connect(button_re_add(index))
 
                 if index == 1 or index == 2:
-                        self.push_button_second = QPushButton(tab_widget_objects)
-                        self.push_button_second.setObjectName(u"push_button_second")
-                        self.push_button_second.setGeometry(QRect(540, 120, 75, 48))
-                        self.push_button_second.setText(push_button_text_list[index + 3])
-                        self.push_button_second.clicked.connect(push_button_dictionary.get(index + 3))
+                        push_button_two_dictionary[index] = QPushButton(tab_widget_objects)
+                        push_button_two_dictionary[index].setGeometry(QRect(540, 120, 75, 48))
+                        push_button_two_dictionary[index].setText(push_button_text_list[index + 3])
+
+                        if index == 1:
+                                push_button_two_dictionary[index].clicked.connect(button_add_download)
+                        else:
+                                push_button_two_dictionary[index].clicked.connect(button_download(index))
 
                         if index == 2:
                                 self.label_progress_header = QLabel(tab_widget_objects)
-                                self.label_progress_header.setObjectName(u"label_progress_header")
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
                                 self.label_progress_header.setText(u"Progress")
 
                                 self.check_box_instrumental = QCheckBox(tab_widget_objects)
-                                self.check_box_instrumental.setObjectName(u"check_box_instrumental")
                                 self.check_box_instrumental.setGeometry(QRect(20, 420, 91, 20))
                                 self.check_box_instrumental.setText(u"Instrumentals")
                                 self.check_box_instrumental.clicked.connect(box_instrumental)
 
                                 self.check_box_lyrics = QCheckBox(tab_widget_objects)
-                                self.check_box_lyrics.setObjectName(u"check_box_lyrics")
                                 self.check_box_lyrics.setGeometry(QRect(140, 420, 51, 20))
                                 self.check_box_lyrics.setText(u"Lyrics")
                                 self.check_box_lyrics.clicked.connect(box_lyrics)
 
                                 self.check_box_cover = QCheckBox(tab_widget_objects)
-                                self.check_box_cover.setObjectName(u"check_box_cover")
                                 self.check_box_cover.setGeometry(QRect(220, 420, 51, 20))
                                 self.check_box_cover.setText(u"Cover")
                                 self.check_box_cover.clicked.connect(box_cover)
