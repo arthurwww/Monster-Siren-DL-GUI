@@ -54,11 +54,21 @@ def update_albums_list():
                         json.dump(i, f, ensure_ascii=False)
                         json.dump(i, f2, ensure_ascii=False)
 
-def button_remove(index):         # work on this next    /            /           /           /           /
+def button_remove(index):
         try:
-                for i in range(widgets_scrollable_dictionary[index]):
-                        if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                return
+                temp_del_list = []
+                with open (json_path_list[index], encoding="utf-8") as f:
+                        y = json.load(f)
+
+                        with open (json_path_list[3], "a", encoding="utf-8") as f2:
+                                for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                                        if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                                        json.dump(y[i], f2, ensure_ascii=False)
+                                                        temp_del_list.append(y[i])
+                        for i in temp_del_list:
+                                y.remove(i)
+                with open (json_path_list[index], "w", encoding="utf-8") as f:
+                        json.dump(y, f, ensure_ascii=False)
         except: 
                 return
 
@@ -92,15 +102,6 @@ def box_lyrics():
 
 def box_cover():
         return
-
-push_button_dictionary = {
-        0: button_remove,
-        1: button_remove,
-        2: button_remove,
-        3: button_re_add,
-        4: button_add_download,
-        5: button_download
-}
 
 push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownload", "Download"]
 
@@ -191,9 +192,9 @@ class Ui_MainWindow(object):
                 push_button_one_dictionary[index].setText(push_button_text_list[index])
 
                 if index == 0 or index == 1 or index == 2:
-                        push_button_one_dictionary[index].clicked.connect(button_remove(index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_remove(index))
                 else:
-                        push_button_one_dictionary[index].clicked.connect(button_re_add(index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_re_add(index))
 
                 if index == 1 or index == 2:
                         push_button_two_dictionary[index] = QPushButton(tab_widget_objects)
@@ -230,8 +231,11 @@ class Ui_MainWindow(object):
                 if index == 2:
                         self.create_tab_scrollable_content_download(tab_widget_objects, index)
 
-        def create_tab_scrollable_content(self, tab_widget_objects, index):
-                if os.stat(json_path_list[index]).st_size == 0:
+        def create_tab_scrollable_content(self, tab_widget_objects, index):   ## get this to work with removed albums file
+                try:
+                        if os.stat(json_path_list[index]).st_size == 0:
+                                return
+                except:
                         return
 
                 try:
