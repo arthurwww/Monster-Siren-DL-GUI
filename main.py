@@ -49,10 +49,19 @@ def check_new_albums(data):
                 
 def update_albums_list():
         all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
-        with open(json_path_list[4], "a", encoding="utf-8") as f, open(json_path_list[1], "a", encoding="utf-8") as f2:
+        with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
+                y = json.load(f)
+                y2 = json.load(f2)
                 for i in all_albums_list_missing:
-                        json.dump(i, f, ensure_ascii=False)
-                        json.dump(i, f2, ensure_ascii=False)
+                        y.append(i)
+                        y2.append(i)
+        with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1], "w", encoding="utf-8") as f2:
+                json.dump(y, f, ensure_ascii=False)
+                json.dump(y2, f2, ensure_ascii=False)
+
+api_get_albums()
+initialise_json()
+update_albums_list()
 
 def button_remove(index):
         try:
@@ -60,23 +69,82 @@ def button_remove(index):
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
 
-                        with open (json_path_list[3], "a", encoding="utf-8") as f2:
-                                for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
-                                        if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                                        json.dump(y[i], f2, ensure_ascii=False)
-                                                        temp_del_list.append(y[i])
+                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                                if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                                temp_del_list.append(y[i])
+                        
+                        if os.stat(json_path_list[3]).st_size == 0:
+                                y2 = []
+                        else:
+                                with open (json_path_list[3], "r", encoding="utf-8") as f2:
+                                        y2 = json.load(f2)
+                        
                         for i in temp_del_list:
                                 y.remove(i)
+                                y2.append(i)
+
+                with open (json_path_list[3], "w", encoding="utf-8") as f2:
+                        json.dump(y2, f2, ensure_ascii=False)
+
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
         except: 
                 return
 
 def button_re_add(index):
-        return
+        try:
+                temp_del_list = []
+                with open (json_path_list[index], encoding="utf-8") as f:
+                        y = json.load(f)
+                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                                if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                        temp_del_list.append(y[i])
+                        
+                        if os.stat(json_path_list[1]).st_size == 0:
+                                y2 = []
+                        else:
+                                with open (json_path_list[1], "r", encoding="utf-8") as f2:
+                                        y2 = json.load(f2)
+
+                        for i in temp_del_list:
+                                y.remove(i)
+                                y2.append(i)
+
+                with open (json_path_list[1], "w", encoding="utf-8") as f2:
+                        json.dump(y2, f2, ensure_ascii=False)
+
+                with open (json_path_list[index], "w", encoding="utf-8") as f:
+                        json.dump(y, f, ensure_ascii=False)
+        except:
+                return
 
 def button_add_download(index):
-        return
+        try:
+                temp_del_list = []
+                with open (json_path_list[index], encoding="utf-8") as f:
+                        y = json.load(f)
+
+                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                                if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                                temp_del_list.append(y[i])
+                        
+                        if os.stat(json_path_list[2]).st_size == 0:
+                                y2 = []
+                        else:
+                                with open (json_path_list[2], "r", encoding="utf-8") as f2:
+                                        y2 = json.load(f2)
+                        
+                        for i in temp_del_list:
+                                y.remove(i)
+                                y2.append(i)
+
+                with open (json_path_list[2], "w", encoding="utf-8") as f2:
+                        json.dump(y2, f2, ensure_ascii=False)
+
+                with open (json_path_list[index], "w", encoding="utf-8") as f:
+                        json.dump(y, f, ensure_ascii=False)
+        except: 
+                return
 
 def button_download(index):
         return
@@ -119,12 +187,12 @@ class Ui_MainWindow(object):
                 self.label_directory.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
                 self.label_directory.setWordWrap(True)
                 self.label_directory.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                self.label_directory.setText(u"")
+                self.label_directory.setText("")
 
                 self.push_button_directory = QPushButton(self.centralwidget)
                 self.push_button_directory.setGeometry(QRect(600, 38, 111, 24))
                 self.push_button_directory.clicked.connect(self.select_directory)
-                self.push_button_directory.setText(u"Select Directory")
+                self.push_button_directory.setText("Select Directory")
 
                 self.tab_widget = QTabWidget(self.centralwidget)
                 self.tab_widget.setGeometry(QRect(70, 80, 651, 461))
@@ -140,26 +208,22 @@ class Ui_MainWindow(object):
                 
                 self.tab_widget_tab_downloaded = QWidget()
                 self.create_tab_layout_base(self.tab_widget_tab_downloaded, 0)
-                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloaded), u"Downloaded")
+                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloaded), "Downloaded")
 
                 self.tab_widget_tab_not_downloaded = QWidget()
                 self.create_tab_layout_base(self.tab_widget_tab_not_downloaded, 1)
-                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_not_downloaded), u"Not Downloaded")
+                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_not_downloaded), "Not Downloaded")
 
                 self.tab_widget_tab_downloading = QWidget()
                 self.create_tab_layout_base(self.tab_widget_tab_downloading, 2)
-                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloading), u"Downloading")
+                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_downloading), "Downloading")
 
                 self.tab_widget_tab_removed = QWidget()
                 self.create_tab_layout_base(self.tab_widget_tab_removed, 3)
-                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_removed), u"Removed")
+                self.tab_widget.setTabText(self.tab_widget.indexOf(self.tab_widget_tab_removed), "Removed")
 
                 MainWindow.setCentralWidget(self.centralwidget)
                 self.tab_widget.setCurrentIndex(1)
-
-                api_get_albums()
-                initialise_json()
-                update_albums_list()
 
         def select_directory(self):
                 file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
@@ -185,7 +249,7 @@ class Ui_MainWindow(object):
 
                 self.label_album_header = QLabel(tab_widget_objects)
                 self.label_album_header.setGeometry(QRect(60, 10, 49, 16))
-                self.label_album_header.setText(u"Album")
+                self.label_album_header.setText("Album")
 
                 push_button_one_dictionary[index] = QPushButton(tab_widget_objects)
                 push_button_one_dictionary[index].setGeometry(QRect(540, 40, 75, 48))
@@ -202,36 +266,35 @@ class Ui_MainWindow(object):
                         push_button_two_dictionary[index].setText(push_button_text_list[index + 3])
 
                         if index == 1:
-                                push_button_two_dictionary[index].clicked.connect(button_add_download)
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(index))
                         else:
-                                push_button_two_dictionary[index].clicked.connect(button_download(index))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(index))
 
-                        if index == 2:
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
-                                self.label_progress_header.setText(u"Progress")
+                                self.label_progress_header.setText("Progress")
 
                                 self.check_box_instrumental = QCheckBox(tab_widget_objects)
                                 self.check_box_instrumental.setGeometry(QRect(20, 420, 91, 20))
-                                self.check_box_instrumental.setText(u"Instrumentals")
+                                self.check_box_instrumental.setText("Instrumentals")
                                 self.check_box_instrumental.clicked.connect(box_instrumental)
 
                                 self.check_box_lyrics = QCheckBox(tab_widget_objects)
                                 self.check_box_lyrics.setGeometry(QRect(140, 420, 51, 20))
-                                self.check_box_lyrics.setText(u"Lyrics")
+                                self.check_box_lyrics.setText("Lyrics")
                                 self.check_box_lyrics.clicked.connect(box_lyrics)
 
                                 self.check_box_cover = QCheckBox(tab_widget_objects)
                                 self.check_box_cover.setGeometry(QRect(220, 420, 51, 20))
-                                self.check_box_cover.setText(u"Cover")
+                                self.check_box_cover.setText("Cover")
                                 self.check_box_cover.clicked.connect(box_cover)
+
+                                #self.create_tab_scrollable_content_download(tab_widget_objects, index)
 
                 self.tab_widget.addTab(tab_widget_objects, "")
                 self.create_tab_scrollable_content(tab_widget_objects, index)
-                if index == 2:
-                        self.create_tab_scrollable_content_download(tab_widget_objects, index)
 
-        def create_tab_scrollable_content(self, tab_widget_objects, index):   ## get this to work with removed albums file
+        def create_tab_scrollable_content(self, tab_widget_objects, index): 
                 try:
                         if os.stat(json_path_list[index]).st_size == 0:
                                 return
