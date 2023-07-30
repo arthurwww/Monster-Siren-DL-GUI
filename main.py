@@ -63,7 +63,7 @@ api_get_albums()
 initialise_json()
 update_albums_list()
 
-def button_remove(index):
+def button_remove(self, index):
         try:
                 temp_del_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
@@ -88,10 +88,12 @@ def button_remove(index):
 
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
+
+                self.refresh_tab_scrollable_content()
         except: 
                 return
 
-def button_re_add(index):
+def button_re_add(self, index):
         try:
                 temp_del_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
@@ -115,10 +117,12 @@ def button_re_add(index):
 
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
+
+                self.refresh_tab_scrollable_content()
         except:
                 return
 
-def button_add_download(index):
+def button_add_download(self, index):
         try:
                 temp_del_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
@@ -143,10 +147,12 @@ def button_add_download(index):
 
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
+
+                self.refresh_tab_scrollable_content()
         except: 
                 return
 
-def button_download(index):
+def button_download(self):
         return
 
 def box_select_all(index):
@@ -176,6 +182,7 @@ push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownlo
 check_box_select_all_dictionary = {}
 push_button_one_dictionary = {}
 push_button_two_dictionary = {}
+widgets_layout_dictionary = {}
 
 class Ui_MainWindow(object):
         def setupUi(self, MainWindow):
@@ -237,8 +244,8 @@ class Ui_MainWindow(object):
                 self.scrollArea.setGeometry(QRect(0, 30, 531, 371))
                 self.scrollAreaWidgetContents = QWidget()
                 self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 529, 369))
-                self.widgets_layout = QGridLayout()
-                self.scrollAreaWidgetContents.setLayout(self.widgets_layout)
+                widgets_layout_dictionary[index] = QGridLayout()
+                self.scrollAreaWidgetContents.setLayout(widgets_layout_dictionary[index])
                 self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
                 check_box_select_all_dictionary[index] = QCheckBox(tab_widget_objects)
@@ -256,9 +263,9 @@ class Ui_MainWindow(object):
                 push_button_one_dictionary[index].setText(push_button_text_list[index])
 
                 if index == 0 or index == 1 or index == 2:
-                        push_button_one_dictionary[index].clicked.connect(lambda : button_remove(index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_remove(self, index))
                 else:
-                        push_button_one_dictionary[index].clicked.connect(lambda : button_re_add(index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_re_add(self, index))
 
                 if index == 1 or index == 2:
                         push_button_two_dictionary[index] = QPushButton(tab_widget_objects)
@@ -266,9 +273,9 @@ class Ui_MainWindow(object):
                         push_button_two_dictionary[index].setText(push_button_text_list[index + 3])
 
                         if index == 1:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(index))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(self, index))
                         else:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(index))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(self, index))
 
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
@@ -313,12 +320,12 @@ class Ui_MainWindow(object):
                                         widgets_scrollable_dictionary[index][(i, 1)].setText(str(y[i][1]))
                                         widgets_scrollable_dictionary[index][(i, 1)].setFixedSize(432, 25)
 
-                                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 0)], i, 0)
-                                        self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 1)], i, 1)
+                                        widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 0)], i, 0)
+                                        widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 1)], i, 1)
                 except:
                         return
 
-        def create_tab_scrollable_content_download(self, tab_widget_objects, index):
+        def create_tab_scrollable_content_download(self, tab_widget_objects, index): # wip
                 if os.stat(json_path_list[index]).st_size == 0:
                         return
                 
@@ -330,7 +337,22 @@ class Ui_MainWindow(object):
                                 widgets_scrollable_dictionary[index][(i, 2)].setValue(50)
                                 widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(160, 25)
 
-                                self.widgets_layout.addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
+                                widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
+
+        def delete_tab_scrollable_content(self, index):
+                for i in reversed(range(widgets_layout_dictionary[index].count())): 
+                        widgets_layout_dictionary[index].itemAt(i).widget().deleteLater()
+
+        def refresh_tab_scrollable_content(self): # fix - issue with buttons in one tab requiring other tabs to be used before re using.
+                self.delete_tab_scrollable_content(0)
+                self.delete_tab_scrollable_content(1)
+                self.delete_tab_scrollable_content(2)
+                self.delete_tab_scrollable_content(3)
+
+                self.create_tab_scrollable_content(self.tab_widget_tab_downloaded, 0)
+                self.create_tab_scrollable_content(self.tab_widget_tab_not_downloaded, 1)
+                self.create_tab_scrollable_content(self.tab_widget_tab_downloading, 2)
+                self.create_tab_scrollable_content(self.tab_widget_tab_removed, 3)
 
 if __name__ == "__main__":
     import sys
