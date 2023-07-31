@@ -69,9 +69,9 @@ def button_remove(self, index):
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
 
-                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                        for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                                temp_del_list.append(y[i])
+                                        temp_del_list.append(y[i])
                         
                         if os.stat(json_path_list[3]).st_size == 0:
                                 y2 = []
@@ -89,6 +89,9 @@ def button_remove(self, index):
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
 
+                for i in range(len(check_box_select_all_dictionary)):
+                        check_box_select_all_dictionary[i].setChecked(False)
+
                 self.refresh_tab_scrollable_content()
         except: 
                 return
@@ -98,7 +101,7 @@ def button_re_add(self, index):
                 temp_del_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
-                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                        for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
                                         temp_del_list.append(y[i])
                         
@@ -118,6 +121,7 @@ def button_re_add(self, index):
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
 
+                check_box_select_all_dictionary[index].setChecked(False)
                 self.refresh_tab_scrollable_content()
         except:
                 return
@@ -128,9 +132,9 @@ def button_add_download(self, index):
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
 
-                        for i in range((int(len(widgets_scrollable_dictionary[index]) /  2))):
+                        for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                                temp_del_list.append(y[i])
+                                        temp_del_list.append(y[i])
                         
                         if os.stat(json_path_list[2]).st_size == 0:
                                 y2 = []
@@ -148,6 +152,7 @@ def button_add_download(self, index):
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
                         json.dump(y, f, ensure_ascii=False)
 
+                check_box_select_all_dictionary[index].setChecked(False)
                 self.refresh_tab_scrollable_content()
         except: 
                 return
@@ -343,7 +348,7 @@ class Ui_MainWindow(object):
                 for i in reversed(range(widgets_layout_dictionary[index].count())): 
                         widgets_layout_dictionary[index].itemAt(i).widget().deleteLater()
 
-        def refresh_tab_scrollable_content(self): # fix - issue with buttons in one tab requiring other tabs to be used before re using.
+        def refresh_tab_scrollable_content(self): 
                 self.delete_tab_scrollable_content(0)
                 self.delete_tab_scrollable_content(1)
                 self.delete_tab_scrollable_content(2)
