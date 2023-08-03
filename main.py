@@ -17,27 +17,24 @@ widgets_scrollable_dictionary = {0:{},
                                 2:{},
                                 3:{}}
 
-def api_get_albums(): 
-        global api_monster_siren_albums_data
-        api_monster_siren_albums_data = []
-        s = requests.session()
-        api_monster_siren_albums_data_raw = s.get("https://monster-siren.hypergryph.com/api/albums", headers={'Content-Type': 'application/json'}).json()['data']
+api_monster_siren_albums_data = []
+s = requests.session()
+api_monster_siren_albums_data_raw = s.get("https://monster-siren.hypergryph.com/api/albums", headers={"Content-Type": "application/json"}).json()["data"]
 
-        for i in api_monster_siren_albums_data_raw:
-                api_monster_siren_albums_data.append([i['cid'], i['name']])
+for i in api_monster_siren_albums_data_raw:
+        api_monster_siren_albums_data.append([i["cid"], i["name"]])
 
-def initialise_json():
-        if os.path.exists(json_path_list[4]) == False:
-                with open(json_path_list[4], "w", encoding="utf-8") as f:
-                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
+if os.path.exists(json_path_list[4]) == False:
+        with open(json_path_list[4], "w", encoding="utf-8") as f:
+                json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
 
-        if os.path.exists(json_path_list[1]) == False:
-                with open(json_path_list[1], "w", encoding="utf-8") as f:
-                        json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
+if os.path.exists(json_path_list[1]) == False:
+        with open(json_path_list[1], "w", encoding="utf-8") as f:
+                json.dump(api_monster_siren_albums_data, f, ensure_ascii=False)
 
-        for json_path in json_path_list:
-                if os.path.exists(json_path) == False:
-                        json_create = open(json_path, "x", encoding="utf8")
+for json_path in json_path_list:
+        if os.path.exists(json_path) == False:
+                json_create = open(json_path, "x", encoding="utf8")
 
 def check_new_albums(data):
         with open(json_path_list[4], "r", encoding="utf8") as all_albums_list:
@@ -47,21 +44,18 @@ def check_new_albums(data):
                         else:
                                 return True
                 
-def update_albums_list():
-        all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
-        with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
-                y = json.load(f)
-                y2 = json.load(f2)
-                for i in all_albums_list_missing:
-                        y.append(i)
-                        y2.append(i)
-        with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1], "w", encoding="utf-8") as f2:
-                json.dump(y, f, ensure_ascii=False)
-                json.dump(y2, f2, ensure_ascii=False)
+all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
 
-api_get_albums()
-initialise_json()
-update_albums_list()
+with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
+        y = json.load(f)
+        y2 = json.load(f2)
+        for i in all_albums_list_missing:
+                y.append(i)
+                y2.append(i)
+
+with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1], "w", encoding="utf-8") as f2:
+        json.dump(y, f, ensure_ascii=False)
+        json.dump(y2, f2, ensure_ascii=False)
 
 def button_remove(self, index):
         try:
@@ -157,8 +151,22 @@ def button_add_download(self, index):
         except: 
                 return
 
-def button_download(self):
-        return
+def button_download(): # wip
+        with open (json_path_list[2], encoding="utf-8") as f:
+                y = json.load(f)
+                for i in y:
+                        print(i)
+                        print(file_explorer + "/" + i[1])
+                        print("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]))
+                        testing = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]), headers={"Content-Type": "application/json"}).json()["data"]
+                        print(testing["coverUrl"])
+                        print(testing["songs"])
+                        print(file_explorer + "/" + i[1] + "/" + testing["songs"][0]["name"] + ".flac")
+                        print("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][0]["cid"]))
+                        testing = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][0]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+                        print(testing["sourceUrl"])
+                        print(testing["lyricUrl"])
+                        print(testing["artists"])
 
 def box_select_all(index):
         try:
@@ -238,10 +246,10 @@ class Ui_MainWindow(object):
                 self.tab_widget.setCurrentIndex(1)
 
         def select_directory(self):
+                global file_explorer
                 file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
                 if os.path.isdir(file_explorer):
                         self.label_directory.setText(file_explorer)
-                        #os.chdir(file_explorer)
 
         def create_tab_layout_base(self, tab_widget_objects, index):
                 self.scrollArea = QScrollArea(tab_widget_objects)
@@ -280,7 +288,7 @@ class Ui_MainWindow(object):
                         if index == 1:
                                 push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(self, index))
                         else:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(self, index))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_download())
 
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
