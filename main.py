@@ -1,11 +1,10 @@
 import os
 import json
-import tqdm
 import requests
-import multiprocessing
-import pydub
-import PIL
-import pylrc
+#import multiprocessing - get normal downloading working first
+#import pydub - download audio first
+#import pylrc - get normal downloading working first
+#import tqdm - progress bar
 
 from PySide6.QtCore import (QRect, Qt)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QFileDialog, QGridLayout)
@@ -59,13 +58,13 @@ with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1]
 
 def button_remove(self, index):
         try:
-                temp_del_list = []
+                delete_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
 
                         for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                        temp_del_list.append(y[i])
+                                        delete_list.append(y[i])
                         
                         if os.stat(json_path_list[3]).st_size == 0:
                                 y2 = []
@@ -73,7 +72,7 @@ def button_remove(self, index):
                                 with open (json_path_list[3], "r", encoding="utf-8") as f2:
                                         y2 = json.load(f2)
                         
-                        for i in temp_del_list:
+                        for i in delete_list:
                                 y.remove(i)
                                 y2.append(i)
 
@@ -92,12 +91,12 @@ def button_remove(self, index):
 
 def button_re_add(self, index):
         try:
-                temp_del_list = []
+                delete_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
                         for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                        temp_del_list.append(y[i])
+                                        delete_list.append(y[i])
                         
                         if os.stat(json_path_list[1]).st_size == 0:
                                 y2 = []
@@ -105,7 +104,7 @@ def button_re_add(self, index):
                                 with open (json_path_list[1], "r", encoding="utf-8") as f2:
                                         y2 = json.load(f2)
 
-                        for i in temp_del_list:
+                        for i in delete_list:
                                 y.remove(i)
                                 y2.append(i)
 
@@ -122,13 +121,13 @@ def button_re_add(self, index):
 
 def button_add_download(self, index):
         try:
-                temp_del_list = []
+                delete_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
                         y = json.load(f)
 
                         for i in range(len(y)):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                        temp_del_list.append(y[i])
+                                        delete_list.append(y[i])
                         
                         if os.stat(json_path_list[2]).st_size == 0:
                                 y2 = []
@@ -136,7 +135,7 @@ def button_add_download(self, index):
                                 with open (json_path_list[2], "r", encoding="utf-8") as f2:
                                         y2 = json.load(f2)
                         
-                        for i in temp_del_list:
+                        for i in delete_list:
                                 y.remove(i)
                                 y2.append(i)
 
@@ -151,22 +150,33 @@ def button_add_download(self, index):
         except: 
                 return
 
-def button_download(): # wip
+def button_download(self):
         with open (json_path_list[2], encoding="utf-8") as f:
                 y = json.load(f)
+
                 for i in y:
-                        print(i)
-                        print(file_explorer + "/" + i[1])
-                        print("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]))
+                        temp = file_explorer + "/" + i[1].strip()
+
+                        if not os.path.exists(temp):
+                                os.mkdir(temp)
+
                         testing = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]), headers={"Content-Type": "application/json"}).json()["data"]
-                        print(testing["coverUrl"])
-                        print(testing["songs"])
-                        print(file_explorer + "/" + i[1] + "/" + testing["songs"][0]["name"] + ".flac")
-                        print("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][0]["cid"]))
-                        testing = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][0]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
-                        print(testing["sourceUrl"])
-                        print(testing["lyricUrl"])
-                        print(testing["artists"])
+                        
+                        with open(temp + "/" + "cover" + ".png", 'wb') as f2:
+                                f2.write(requests.get(testing["coverUrl"]).content)
+
+                        for i in range(len(testing["songs"])):
+                                print(testing["songs"][i]["cid"])
+                                print(testing["songs"][i]["name"])
+                                temp2 = testing["songs"][i]["name"]
+                                testing2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+                                with open(temp + "/" + temp2 + ".flac", 'wb') as f3:
+                                        f3.write(requests.get(testing2["sourceUrl"]).content)
+
+                        #if self.check_box_instrumental.isChecked():
+                        #        print(testing["lyricUrl"])         # - lyrics
+
+                        #print(testing["artists"])                  # - file metadeta
 
 def box_select_all(index):
         try:
@@ -288,7 +298,7 @@ class Ui_MainWindow(object):
                         if index == 1:
                                 push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(self, index))
                         else:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_download())
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(self))
 
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
@@ -338,19 +348,19 @@ class Ui_MainWindow(object):
                 except:
                         return
 
-        def create_tab_scrollable_content_download(self, tab_widget_objects, index): # wip
-                if os.stat(json_path_list[index]).st_size == 0:
-                        return
-                
-                with open (json_path_list[index], encoding="utf-8") as f:
-                        y = json.load(f)
-                        for i in range(len(y)):
-                                widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(255, 25)
-                                widgets_scrollable_dictionary[index][(i, 2)] = QProgressBar(tab_widget_objects)
-                                widgets_scrollable_dictionary[index][(i, 2)].setValue(50)
-                                widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(160, 25)
-
-                                widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
+        #def create_tab_scrollable_content_download(self, tab_widget_objects, index): # wip
+        #        if os.stat(json_path_list[index]).st_size == 0:
+        #                return
+        #        
+        #        with open (json_path_list[index], encoding="utf-8") as f:
+        #                y = json.load(f)
+        #                for i in range(len(y)):
+        #                        widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(255, 25)
+        #                        widgets_scrollable_dictionary[index][(i, 2)] = QProgressBar(tab_widget_objects)
+        #                        widgets_scrollable_dictionary[index][(i, 2)].setValue(50)
+        #                        widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(160, 25)
+        #
+        #                        widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
 
         def delete_tab_scrollable_content(self, index):
                 for i in reversed(range(widgets_layout_dictionary[index].count())): 
