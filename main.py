@@ -2,13 +2,17 @@ import os
 import json
 import requests
 from PIL import Image
-#import multiprocessing - get normal downloading working first
+import multiprocessing
 from pydub import AudioSegment
 from mutagen.flac import FLAC, Picture
 #import tqdm - progress bar
 
 from PySide6.QtCore import (QRect, Qt)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QFileDialog, QGridLayout)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QGridLayout)
+
+file_explorer = os.getcwd() + "\Albums"
+if os.path.exists(file_explorer) == False:
+        os.mkdir(file_explorer)
 
 json_path_list = ["downloaded_albums.json", "not_downloaded_albums.json", "downloading_albums.json", "removed_albums.json", "all_albums.json"]
 
@@ -18,8 +22,7 @@ widgets_scrollable_dictionary = {0:{},
                                 3:{}}
 
 api_monster_siren_albums_data = []
-s = requests.session()
-api_monster_siren_albums_data_raw = s.get("https://monster-siren.hypergryph.com/api/albums", headers={"Content-Type": "application/json"}).json()["data"]
+api_monster_siren_albums_data_raw = requests.get("https://monster-siren.hypergryph.com/api/albums", headers={"Content-Type": "application/json"}).json()["data"]
 
 for i in api_monster_siren_albums_data_raw:
         api_monster_siren_albums_data.append([i["cid"], i["name"]])
@@ -90,6 +93,88 @@ def button_one(self, index, destination):
         except: 
                 return
 
+def process_songs(albums):
+                album_path = file_explorer + "/" + albums[1].strip()
+
+                if not os.path.exists(album_path):
+                        os.mkdir(album_path)
+
+                r = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
+                
+                if ".png" in r["coverUrl"]:
+                        with open(album_path + "/cover.png", 'wb') as f2:
+                                f2.write(requests.get(r["coverUrl"]).content)
+
+                elif ".jpg" in r["coverUrl"]:
+                        with open(album_path + "/cover.jpg", 'wb') as f2:
+                                f2.write(requests.get(r["coverUrl"]).content)
+                                image_convert = Image.open(album_path + "/cover.jpg")
+                                image_convert.save(album_path + "/cover.png")
+
+                elif ".jpeg" in r["coverUrl"]:
+                        with open(album_path + "/cover.jpeg", 'wb') as f2:
+                                f2.write(requests.get(r["coverUrl"]).content)
+                                image_convert = Image.open(album_path + "/cover.jpeg")
+                                image_convert.save(album_path + "/cover.png")
+                else:
+                        print(r["coverUrl"])
+
+                if ".jpg" in r["coverUrl"]:
+                        os.remove(album_path + "/cover.jpg")
+                elif ".jpeg" in r["coverUrl"]:
+                        os.remove(album_path + "/cover.jpeg")
+
+
+                for i in range(len(r["songs"])):
+                        temp2 = r["songs"][i]["name"]
+
+                        #if "Instrumental" in temp2 and self.check_box_instrumental.isChecked():
+                        #        break
+
+                        r2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+
+                        if ".flac" in r2["sourceUrl"]:
+                                with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
+                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
+                        elif ".mp3" in r2["sourceUrl"]:
+                                with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
+                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
+                        elif ".wav" in r2["sourceUrl"]:
+                                with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
+                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
+                        else:
+                                print(r2["sourceUrl"])
+                        
+                        audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
+
+                        if ".mp3" in r2["sourceUrl"]:
+                                os.remove(album_path + "/" + temp2 + ".mp3")
+                        elif ".wav" in r2["sourceUrl"]:
+                                os.remove(album_path + "/" + temp2 + ".wav")
+
+                        audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
+
+                        image = Picture()
+                        image.type = 3
+                        image.mime = "image/png"
+
+                        with open(album_path + "/cover.png", 'rb') as f5:
+                                image.data = f5.read()
+
+                        audio_flac.add_picture(image)
+                        audio_flac["album"] = r["name"]
+                        audio_flac["artist"] = r2["artists"]
+                        audio_flac["title"] = r2["name"]
+
+                        audio_flac.save()
+
+def pool_handler(albums):
+        pool = multiprocessing.Pool() 
+        pool.map(process_songs, albums)
+
 def button_download(self, index):
         with open (json_path_list[2], encoding="utf-8") as f:
                 y = json.load(f)
@@ -98,83 +183,10 @@ def button_download(self, index):
                 for i in range(len(y)):
                         if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
                                 download_list.append(y[i])
+                
+                pool_handler(download_list)
 
-                if file_explorer:
-                        for i in download_list:
-                                album_path = file_explorer + "/" + i[1].strip()
-
-                                if not os.path.exists(album_path):
-                                        os.mkdir(album_path)
-
-                                r = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]), headers={"Content-Type": "application/json"}).json()["data"]
-                                
-                                if ".png" in r["coverUrl"]:
-                                        with open(album_path + "/cover.png", 'wb') as f2:
-                                                f2.write(requests.get(r["coverUrl"]).content)
-
-                                elif ".jpg" in r["coverUrl"]:
-                                        with open(album_path + "/cover.jpg", 'wb') as f2:
-                                                f2.write(requests.get(r["coverUrl"]).content)
-                                                image_convert = Image.open(album_path + "/cover.jpg")
-                                                image_convert.save(album_path + "/cover.png")
-
-                                elif ".jpeg" in r["coverUrl"]:
-                                        with open(album_path + "/cover.jpeg", 'wb') as f2:
-                                                f2.write(requests.get(r["coverUrl"]).content)
-                                                image_convert = Image.open(album_path + "/cover.jpeg")
-                                                image_convert.save(album_path + "/cover.png")
-                                else:
-                                        print(r["coverUrl"])
-
-   
-                                for i in range(len(r["songs"])):
-                                        temp2 = r["songs"][i]["name"]
-
-                                        if "Instrumental" in temp2 and self.check_box_instrumental.isChecked():
-                                                break
-
-                                        r2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
-
-                                        if ".flac" in r2["sourceUrl"]:
-                                                with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
-                                                        f4.write(requests.get(r2["sourceUrl"]).content)
-                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
-                                        elif ".mp3" in r2["sourceUrl"]:
-                                                with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
-                                                        f4.write(requests.get(r2["sourceUrl"]).content)
-                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
-                                        elif ".wav" in r2["sourceUrl"]:
-                                                with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
-                                                        f4.write(requests.get(r2["sourceUrl"]).content)
-                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
-                                        else:
-                                                print(r2["sourceUrl"])
-                                        
-                                        audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
-
-                                        if ".mp3" in r2["sourceUrl"]:
-                                                os.remove(album_path + "/" + temp2 + ".mp3")
-
-                                        elif ".wav" in r2["sourceUrl"]:
-                                                os.remove(album_path + "/" + temp2 + ".wav")
-
-                                        audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
-
-                                        image = Picture()
-                                        image.type = 3
-                                        image.mime = "image/png"
-#
-                                        with open(album_path + "/cover.png", 'rb') as f5:
-                                                image.data = f5.read()
-
-                                        audio_flac.add_picture(image)
-                                        audio_flac["album"] = r["name"]
-                                        audio_flac["artist"] = r2["artists"]
-                                        audio_flac["title"] = r2["name"]
-
-                                        audio_flac.save()
-
-                        button_one(self, index, 0)
+        button_one(self, index, 0)
 
 def box_select_all(index):
         try:
@@ -200,19 +212,6 @@ class Ui_MainWindow(object):
         def setupUi(self, MainWindow):
                 MainWindow.setFixedSize(792, 590)
                 self.centralwidget = QWidget(MainWindow)
-                self.label_directory = QLabel(self.centralwidget)
-                self.label_directory.setGeometry(QRect(100, 40, 491, 21))
-                self.label_directory.setFrameShape(QFrame.Box)
-                self.label_directory.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
-                self.label_directory.setWordWrap(True)
-                self.label_directory.setTextInteractionFlags(Qt.TextSelectableByMouse)
-                self.label_directory.setText("")
-
-                self.push_button_directory = QPushButton(self.centralwidget)
-                self.push_button_directory.setGeometry(QRect(600, 38, 111, 24))
-                self.push_button_directory.clicked.connect(self.select_directory)
-                self.push_button_directory.setText("Select Directory")
-
                 self.tab_widget = QTabWidget(self.centralwidget)
                 self.tab_widget.setGeometry(QRect(70, 80, 651, 461))
                 self.tab_widget.setContextMenuPolicy(Qt.NoContextMenu)
@@ -243,12 +242,6 @@ class Ui_MainWindow(object):
 
                 MainWindow.setCentralWidget(self.centralwidget)
                 self.tab_widget.setCurrentIndex(1)
-
-        def select_directory(self):
-                global file_explorer
-                file_explorer = QFileDialog.getExistingDirectory(MainWindow, "Open Folder", "")
-                if os.path.isdir(file_explorer):
-                        self.label_directory.setText(file_explorer)
 
         def create_tab_layout_base(self, tab_widget_objects, index):
                 self.scrollArea = QScrollArea(tab_widget_objects)
