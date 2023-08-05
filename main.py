@@ -1,9 +1,10 @@
 import os
 import json
 import requests
+from PIL import Image
 #import multiprocessing - get normal downloading working first
-#import pydub - download audio first
-#import pylrc - get normal downloading working first
+from pydub import AudioSegment
+from mutagen.flac import FLAC, Picture
 #import tqdm - progress bar
 
 from PySide6.QtCore import (QRect, Qt)
@@ -56,7 +57,7 @@ with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1]
         json.dump(y, f, ensure_ascii=False)
         json.dump(y2, f2, ensure_ascii=False)
 
-def button_remove(self, index):
+def button_one(self, index, destination):
         try:
                 delete_list = []
                 with open (json_path_list[index], encoding="utf-8") as f:
@@ -66,17 +67,17 @@ def button_remove(self, index):
                                 if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
                                         delete_list.append(y[i])
                         
-                        if os.stat(json_path_list[3]).st_size == 0:
+                        if os.stat(json_path_list[destination]).st_size == 0:
                                 y2 = []
                         else:
-                                with open (json_path_list[3], "r", encoding="utf-8") as f2:
+                                with open (json_path_list[destination], "r", encoding="utf-8") as f2:
                                         y2 = json.load(f2)
                         
                         for i in delete_list:
                                 y.remove(i)
                                 y2.append(i)
 
-                with open (json_path_list[3], "w", encoding="utf-8") as f2:
+                with open (json_path_list[destination], "w", encoding="utf-8") as f2:
                         json.dump(y2, f2, ensure_ascii=False)
 
                 with open (json_path_list[index], "w", encoding="utf-8") as f:
@@ -89,94 +90,91 @@ def button_remove(self, index):
         except: 
                 return
 
-def button_re_add(self, index):
-        try:
-                delete_list = []
-                with open (json_path_list[index], encoding="utf-8") as f:
-                        y = json.load(f)
-                        for i in range(len(y)):
-                                if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                        delete_list.append(y[i])
-                        
-                        if os.stat(json_path_list[1]).st_size == 0:
-                                y2 = []
-                        else:
-                                with open (json_path_list[1], "r", encoding="utf-8") as f2:
-                                        y2 = json.load(f2)
-
-                        for i in delete_list:
-                                y.remove(i)
-                                y2.append(i)
-
-                with open (json_path_list[1], "w", encoding="utf-8") as f2:
-                        json.dump(y2, f2, ensure_ascii=False)
-
-                with open (json_path_list[index], "w", encoding="utf-8") as f:
-                        json.dump(y, f, ensure_ascii=False)
-
-                check_box_select_all_dictionary[index].setChecked(False)
-                self.refresh_tab_scrollable_content()
-        except:
-                return
-
-def button_add_download(self, index):
-        try:
-                delete_list = []
-                with open (json_path_list[index], encoding="utf-8") as f:
-                        y = json.load(f)
-
-                        for i in range(len(y)):
-                                if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
-                                        delete_list.append(y[i])
-                        
-                        if os.stat(json_path_list[2]).st_size == 0:
-                                y2 = []
-                        else:
-                                with open (json_path_list[2], "r", encoding="utf-8") as f2:
-                                        y2 = json.load(f2)
-                        
-                        for i in delete_list:
-                                y.remove(i)
-                                y2.append(i)
-
-                with open (json_path_list[2], "w", encoding="utf-8") as f2:
-                        json.dump(y2, f2, ensure_ascii=False)
-
-                with open (json_path_list[index], "w", encoding="utf-8") as f:
-                        json.dump(y, f, ensure_ascii=False)
-
-                check_box_select_all_dictionary[index].setChecked(False)
-                self.refresh_tab_scrollable_content()
-        except: 
-                return
-
-def button_download(self):
+def button_download(self, index):
         with open (json_path_list[2], encoding="utf-8") as f:
                 y = json.load(f)
 
-                for i in y:
-                        temp = file_explorer + "/" + i[1].strip()
+                download_list = []
+                for i in range(len(y)):
+                        if widgets_scrollable_dictionary[index][(i, 0)].isChecked():
+                                download_list.append(y[i])
 
-                        if not os.path.exists(temp):
-                                os.mkdir(temp)
+                if file_explorer:
+                        for i in download_list:
+                                album_path = file_explorer + "/" + i[1].strip()
 
-                        testing = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]), headers={"Content-Type": "application/json"}).json()["data"]
-                        
-                        with open(temp + "/" + "cover" + ".png", 'wb') as f2:
-                                f2.write(requests.get(testing["coverUrl"]).content)
+                                if not os.path.exists(album_path):
+                                        os.mkdir(album_path)
 
-                        for i in range(len(testing["songs"])):
-                                print(testing["songs"][i]["cid"])
-                                print(testing["songs"][i]["name"])
-                                temp2 = testing["songs"][i]["name"]
-                                testing2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(testing["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
-                                with open(temp + "/" + temp2 + ".flac", 'wb') as f3:
-                                        f3.write(requests.get(testing2["sourceUrl"]).content)
+                                r = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(i[0]), headers={"Content-Type": "application/json"}).json()["data"]
+                                
+                                if ".png" in r["coverUrl"]:
+                                        with open(album_path + "/cover.png", 'wb') as f2:
+                                                f2.write(requests.get(r["coverUrl"]).content)
 
-                        #if self.check_box_instrumental.isChecked():
-                        #        print(testing["lyricUrl"])         # - lyrics
+                                elif ".jpg" in r["coverUrl"]:
+                                        with open(album_path + "/cover.jpg", 'wb') as f2:
+                                                f2.write(requests.get(r["coverUrl"]).content)
+                                                image_convert = Image.open(album_path + "/cover.jpg")
+                                                image_convert.save(album_path + "/cover.png")
 
-                        #print(testing["artists"])                  # - file metadeta
+                                elif ".jpeg" in r["coverUrl"]:
+                                        with open(album_path + "/cover.jpeg", 'wb') as f2:
+                                                f2.write(requests.get(r["coverUrl"]).content)
+                                                image_convert = Image.open(album_path + "/cover.jpeg")
+                                                image_convert.save(album_path + "/cover.png")
+                                else:
+                                        print(r["coverUrl"])
+
+   
+                                for i in range(len(r["songs"])):
+                                        temp2 = r["songs"][i]["name"]
+
+                                        if "Instrumental" in temp2 and self.check_box_instrumental.isChecked():
+                                                break
+
+                                        r2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+
+                                        if ".flac" in r2["sourceUrl"]:
+                                                with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
+                                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
+                                        elif ".mp3" in r2["sourceUrl"]:
+                                                with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
+                                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
+                                        elif ".wav" in r2["sourceUrl"]:
+                                                with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
+                                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
+                                        else:
+                                                print(r2["sourceUrl"])
+                                        
+                                        audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
+
+                                        if ".mp3" in r2["sourceUrl"]:
+                                                os.remove(album_path + "/" + temp2 + ".mp3")
+
+                                        elif ".wav" in r2["sourceUrl"]:
+                                                os.remove(album_path + "/" + temp2 + ".wav")
+
+                                        audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
+
+                                        image = Picture()
+                                        image.type = 3
+                                        image.mime = "image/png"
+#
+                                        with open(album_path + "/cover.png", 'rb') as f5:
+                                                image.data = f5.read()
+
+                                        audio_flac.add_picture(image)
+                                        audio_flac["album"] = r["name"]
+                                        audio_flac["artist"] = r2["artists"]
+                                        audio_flac["title"] = r2["name"]
+
+                                        audio_flac.save()
+
+                        button_one(self, index, 0)
 
 def box_select_all(index):
         try:
@@ -191,15 +189,6 @@ def box_select_all(index):
         except:
                 return
                                 
-def box_instrumental():
-        return
-
-def box_lyrics():
-        return
-
-def box_cover():
-        return
-
 push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownload", "Download"]
 
 check_box_select_all_dictionary = {}
@@ -286,9 +275,9 @@ class Ui_MainWindow(object):
                 push_button_one_dictionary[index].setText(push_button_text_list[index])
 
                 if index == 0 or index == 1 or index == 2:
-                        push_button_one_dictionary[index].clicked.connect(lambda : button_remove(self, index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_one(self, index, 3))
                 else:
-                        push_button_one_dictionary[index].clicked.connect(lambda : button_re_add(self, index))
+                        push_button_one_dictionary[index].clicked.connect(lambda : button_one(self, index, 1))
 
                 if index == 1 or index == 2:
                         push_button_two_dictionary[index] = QPushButton(tab_widget_objects)
@@ -296,28 +285,17 @@ class Ui_MainWindow(object):
                         push_button_two_dictionary[index].setText(push_button_text_list[index + 3])
 
                         if index == 1:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_add_download(self, index))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_one(self, index, 2))
                         else:
-                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(self))
+                                push_button_two_dictionary[index].clicked.connect(lambda: button_download(self, index))
 
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
                                 self.label_progress_header.setText("Progress")
 
                                 self.check_box_instrumental = QCheckBox(tab_widget_objects)
-                                self.check_box_instrumental.setGeometry(QRect(20, 420, 91, 20))
-                                self.check_box_instrumental.setText("Instrumentals")
-                                self.check_box_instrumental.clicked.connect(box_instrumental)
-
-                                self.check_box_lyrics = QCheckBox(tab_widget_objects)
-                                self.check_box_lyrics.setGeometry(QRect(140, 420, 51, 20))
-                                self.check_box_lyrics.setText("Lyrics")
-                                self.check_box_lyrics.clicked.connect(box_lyrics)
-
-                                self.check_box_cover = QCheckBox(tab_widget_objects)
-                                self.check_box_cover.setGeometry(QRect(220, 420, 51, 20))
-                                self.check_box_cover.setText("Cover")
-                                self.check_box_cover.clicked.connect(box_cover)
+                                self.check_box_instrumental.setGeometry(QRect(20, 420, 120, 20))
+                                self.check_box_instrumental.setText("No Instrumentals")
 
                                 #self.create_tab_scrollable_content_download(tab_widget_objects, index)
 
