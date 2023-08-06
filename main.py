@@ -56,16 +56,17 @@ def check_new_albums(data):
                 
 all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
 
-with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
-        y = json.load(f)
-        y2 = json.load(f2)
-        for i in all_albums_list_missing:
-                y.append(i)
-                y2.append(i)
+if len(list(all_albums_list_missing)) > 0:
+        with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
+                y = json.load(f)
+                y2 = json.load(f2)
+                for i in all_albums_list_missing:
+                        y.append(i)
+                        y2.append(i)
 
-with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1], "w", encoding="utf-8") as f2:
-        json.dump(y, f, ensure_ascii=False)
-        json.dump(y2, f2, ensure_ascii=False)
+        with open(json_path_list[4], "w", encoding="utf-8") as f, open(json_path_list[1], "w", encoding="utf-8") as f2:
+                json.dump(y, f, ensure_ascii=False)
+                json.dump(y2, f2, ensure_ascii=False)
 
 def button_one(self, index, destination):
         try:
@@ -100,80 +101,97 @@ def button_one(self, index, destination):
         except: 
                 return
 
+def validate_file_name(filename):
+        filename.strip()
+        filename = filename.replace(":", "：")
+        filename = filename.replace("?", "？")
+        filename = filename.replace("%", "％")
+        filename = filename.replace("*", "＊")
+        filename = filename.replace("|", "|")
+        return filename
+
 def process_songs(albums):
-                album_path = file_explorer + "/" + albums[1].strip()
+                try:
+                        album_path = file_explorer + "/" + validate_file_name(albums[1])
 
-                if not os.path.exists(album_path):
-                        os.mkdir(album_path)
+                        if not os.path.exists(album_path):
+                                os.mkdir(album_path)
 
-                r = s.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
-                
-                if ".png" in r["coverUrl"]:
-                        with open(album_path + "/cover.png", 'wb') as f2:
-                                f2.write(s.get(r["coverUrl"]).content)
-
-                elif ".jpg" in r["coverUrl"]:
-                        with open(album_path + "/cover.jpg", 'wb') as f2:
-                                f2.write(s.get(r["coverUrl"]).content)
-                                image_convert = Image.open(album_path + "/cover.jpg")
-                                image_convert.save(album_path + "/cover.png")
-
-                elif ".jpeg" in r["coverUrl"]:
-                        with open(album_path + "/cover.jpeg", 'wb') as f2:
-                                f2.write(s.get(r["coverUrl"]).content)
-                                image_convert = Image.open(album_path + "/cover.jpeg")
-                                image_convert.save(album_path + "/cover.png")
-                else:
-                        print(r["coverUrl"])
-
-                if ".jpg" in r["coverUrl"]:
-                        os.remove(album_path + "/cover.jpg")
-                elif ".jpeg" in r["coverUrl"]:
-                        os.remove(album_path + "/cover.jpeg")
-
-
-                for i in range(len(r["songs"])):
-                        temp2 = r["songs"][i]["name"]
-
-                        r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
-
-                        if ".flac" in r2["sourceUrl"]:
-                                with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
-                                        f4.write(s.get(r2["sourceUrl"]).content)
-                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
-                        elif ".mp3" in r2["sourceUrl"]:
-                                with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
-                                        f4.write(s.get(r2["sourceUrl"]).content)
-                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
-                        elif ".wav" in r2["sourceUrl"]:
-                                with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
-                                        f4.write(s.get(r2["sourceUrl"]).content)
-                                        audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
-                        else:
-                                print(r2["sourceUrl"])
+                        r = s.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
                         
-                        audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
+                        if ".png" in r["coverUrl"]:
+                                with open(album_path + "/cover.png", 'wb') as f2:
+                                        f2.write(s.get(r["coverUrl"]).content)
 
-                        if ".mp3" in r2["sourceUrl"]:
-                                os.remove(album_path + "/" + temp2 + ".mp3")
-                        elif ".wav" in r2["sourceUrl"]:
-                                os.remove(album_path + "/" + temp2 + ".wav")
+                        elif ".jpg" in r["coverUrl"]:
+                                with open(album_path + "/cover.jpg", 'wb') as f2:
+                                        f2.write(s.get(r["coverUrl"]).content)
+                                        image_convert = Image.open(album_path + "/cover.jpg")
+                                        image_convert.save(album_path + "/cover.png")
 
-                        audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
+                        elif ".jpeg" in r["coverUrl"]:
+                                with open(album_path + "/cover.jpeg", 'wb') as f2:
+                                        f2.write(s.get(r["coverUrl"]).content)
+                                        image_convert = Image.open(album_path + "/cover.jpeg")
+                                        image_convert.save(album_path + "/cover.png")
 
-                        image = Picture()
-                        image.type = 3
-                        image.mime = "image/png"
+                        if ".jpg" in r["coverUrl"]:
+                                os.remove(album_path + "/cover.jpg")
+                        elif ".jpeg" in r["coverUrl"]:
+                                os.remove(album_path + "/cover.jpeg")
 
-                        with open(album_path + "/cover.png", 'rb') as f5:
-                                image.data = f5.read()
 
-                        audio_flac.add_picture(image)
-                        audio_flac["album"] = r["name"]
-                        audio_flac["artist"] = r2["artists"]
-                        audio_flac["title"] = r2["name"]
+                        for i in range(len(r["songs"])):
+                                temp2 = validate_file_name(r["songs"][i]["name"])
 
-                        audio_flac.save()
+                                r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+
+                                if ".flac" in r2["sourceUrl"]:
+                                        with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
+                                                f4.write(s.get(r2["sourceUrl"]).content)
+                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
+                                elif ".mp3" in r2["sourceUrl"]:
+                                        with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
+                                                f4.write(s.get(r2["sourceUrl"]).content)
+                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
+                                elif ".wav" in r2["sourceUrl"]:
+                                        with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
+                                                f4.write(s.get(r2["sourceUrl"]).content)
+                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
+                                
+                                audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
+
+                                if ".mp3" in r2["sourceUrl"]:
+                                        os.remove(album_path + "/" + temp2 + ".mp3")
+                                elif ".wav" in r2["sourceUrl"]:
+                                        os.remove(album_path + "/" + temp2 + ".wav")
+
+                                audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
+
+                                image = Picture()
+                                image.type = 3
+                                image.mime = "image/png"
+
+                                with open(album_path + "/cover.png", 'rb') as f5:
+                                        image.data = f5.read()
+
+                                audio_flac.add_picture(image)
+                                audio_flac["album"] = r["name"]
+                                audio_flac["artist"] = r2["artists"]
+                                audio_flac["title"] = r2["name"]
+
+                                audio_flac.save()
+                except requests.exceptions.Timeout:
+                        process_songs(albums)
+                except requests.exceptions.HTTPError:
+                        process_songs(albums)
+                except requests.exceptions.ConnectionError:
+                        process_songs(albums)
+                except requests.exceptions.RetryError:
+                        process_songs(albums)
+                except Exception as ex: 
+                        print(ex)
+                        process_songs(albums)
 
 def pool_handler(albums):
         pool = multiprocessing.Pool() 
@@ -279,10 +297,6 @@ class Ui_MainWindow(object):
                                 push_button_two_dictionary[index].clicked.connect(lambda: button_one(self, index, 2))
                         else:
                                 push_button_two_dictionary[index].clicked.connect(lambda: button_download(self, index))
-
-                                self.label_progress_header = QLabel(tab_widget_objects)
-                                self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
-                                self.label_progress_header.setText("Progress")
                                 
                 self.tab_widget.addTab(tab_widget_objects, "")
                 self.create_tab_scrollable_content(tab_widget_objects, index)
