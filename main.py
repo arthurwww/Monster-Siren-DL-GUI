@@ -5,16 +5,16 @@ from PIL import Image
 import multiprocessing
 from pydub import AudioSegment
 from mutagen.flac import FLAC, Picture
-#import tqdm - progress bar
 
 from PySide6.QtCore import (QRect, Qt)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QLabel, QMainWindow, QProgressBar, QPushButton, QScrollArea, QTabWidget, QWidget, QGridLayout)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QLabel, QMainWindow, QPushButton, QScrollArea, QTabWidget, QWidget, QGridLayout)
 
 file_explorer = os.getcwd() + "\Albums"
 if os.path.exists(file_explorer) == False:
         os.mkdir(file_explorer)
 
 json_path_list = ["downloaded_albums.json", "not_downloaded_albums.json", "downloading_albums.json", "removed_albums.json", "all_albums.json"]
+push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownload", "Download"]
 
 widgets_scrollable_dictionary = {0:{},
                                 1:{},
@@ -22,7 +22,14 @@ widgets_scrollable_dictionary = {0:{},
                                 3:{}}
 
 api_monster_siren_albums_data = []
-api_monster_siren_albums_data_raw = requests.get("https://monster-siren.hypergryph.com/api/albums", headers={"Content-Type": "application/json"}).json()["data"]
+
+check_box_select_all_dictionary = {}
+push_button_one_dictionary = {}
+push_button_two_dictionary = {}
+widgets_layout_dictionary = {}
+
+s = requests.Session()
+api_monster_siren_albums_data_raw = s.get("https://monster-siren.hypergryph.com/api/albums", headers={"Content-Type": "application/json"}).json()["data"]
 
 for i in api_monster_siren_albums_data_raw:
         api_monster_siren_albums_data.append([i["cid"], i["name"]])
@@ -99,21 +106,21 @@ def process_songs(albums):
                 if not os.path.exists(album_path):
                         os.mkdir(album_path)
 
-                r = requests.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
+                r = s.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
                 
                 if ".png" in r["coverUrl"]:
                         with open(album_path + "/cover.png", 'wb') as f2:
-                                f2.write(requests.get(r["coverUrl"]).content)
+                                f2.write(s.get(r["coverUrl"]).content)
 
                 elif ".jpg" in r["coverUrl"]:
                         with open(album_path + "/cover.jpg", 'wb') as f2:
-                                f2.write(requests.get(r["coverUrl"]).content)
+                                f2.write(s.get(r["coverUrl"]).content)
                                 image_convert = Image.open(album_path + "/cover.jpg")
                                 image_convert.save(album_path + "/cover.png")
 
                 elif ".jpeg" in r["coverUrl"]:
                         with open(album_path + "/cover.jpeg", 'wb') as f2:
-                                f2.write(requests.get(r["coverUrl"]).content)
+                                f2.write(s.get(r["coverUrl"]).content)
                                 image_convert = Image.open(album_path + "/cover.jpeg")
                                 image_convert.save(album_path + "/cover.png")
                 else:
@@ -128,22 +135,19 @@ def process_songs(albums):
                 for i in range(len(r["songs"])):
                         temp2 = r["songs"][i]["name"]
 
-                        #if "Instrumental" in temp2 and self.check_box_instrumental.isChecked():
-                        #        break
-
-                        r2 = requests.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
+                        r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
 
                         if ".flac" in r2["sourceUrl"]:
                                 with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
-                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        f4.write(s.get(r2["sourceUrl"]).content)
                                         audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
                         elif ".mp3" in r2["sourceUrl"]:
                                 with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
-                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        f4.write(s.get(r2["sourceUrl"]).content)
                                         audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
                         elif ".wav" in r2["sourceUrl"]:
                                 with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
-                                        f4.write(requests.get(r2["sourceUrl"]).content)
+                                        f4.write(s.get(r2["sourceUrl"]).content)
                                         audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
                         else:
                                 print(r2["sourceUrl"])
@@ -200,20 +204,14 @@ def box_select_all(index):
                                 widgets_scrollable_dictionary[index][(i, 0)].setCheckState(Qt.Unchecked)
         except:
                 return
-                                
-push_button_text_list = ["Remove", "Remove", "Remove", "Re-add", "Add to\nDownload", "Download"]
-
-check_box_select_all_dictionary = {}
-push_button_one_dictionary = {}
-push_button_two_dictionary = {}
-widgets_layout_dictionary = {}
-
+                        
 class Ui_MainWindow(object):
         def setupUi(self, MainWindow):
-                MainWindow.setFixedSize(792, 590)
+                MainWindow.setFixedSize(750, 530)
+                MainWindow.setWindowTitle("塞壬唱片-MSR Downloader")
                 self.centralwidget = QWidget(MainWindow)
                 self.tab_widget = QTabWidget(self.centralwidget)
-                self.tab_widget.setGeometry(QRect(70, 80, 651, 461))
+                self.tab_widget.setGeometry(QRect(49, 30, 651, 461))
                 self.tab_widget.setContextMenuPolicy(Qt.NoContextMenu)
                 self.tab_widget.setLayoutDirection(Qt.LeftToRight)
                 self.tab_widget.setAutoFillBackground(False)
@@ -285,13 +283,7 @@ class Ui_MainWindow(object):
                                 self.label_progress_header = QLabel(tab_widget_objects)
                                 self.label_progress_header.setGeometry(QRect(333, 10, 51, 16))
                                 self.label_progress_header.setText("Progress")
-
-                                self.check_box_instrumental = QCheckBox(tab_widget_objects)
-                                self.check_box_instrumental.setGeometry(QRect(20, 420, 120, 20))
-                                self.check_box_instrumental.setText("No Instrumentals")
-
-                                #self.create_tab_scrollable_content_download(tab_widget_objects, index)
-
+                                
                 self.tab_widget.addTab(tab_widget_objects, "")
                 self.create_tab_scrollable_content(tab_widget_objects, index)
 
@@ -318,20 +310,6 @@ class Ui_MainWindow(object):
                                         widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 1)], i, 1)
                 except:
                         return
-
-        #def create_tab_scrollable_content_download(self, tab_widget_objects, index): # wip
-        #        if os.stat(json_path_list[index]).st_size == 0:
-        #                return
-        #        
-        #        with open (json_path_list[index], encoding="utf-8") as f:
-        #                y = json.load(f)
-        #                for i in range(len(y)):
-        #                        widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(255, 25)
-        #                        widgets_scrollable_dictionary[index][(i, 2)] = QProgressBar(tab_widget_objects)
-        #                        widgets_scrollable_dictionary[index][(i, 2)].setValue(50)
-        #                        widgets_scrollable_dictionary[index][(i, 2)].setFixedSize(160, 25)
-        #
-        #                        widgets_layout_dictionary[index].addWidget(widgets_scrollable_dictionary[index][(i, 2)], i, 2)
 
         def delete_tab_scrollable_content(self, index):
                 for i in reversed(range(widgets_layout_dictionary[index].count())): 
