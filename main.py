@@ -144,6 +144,9 @@ def process_songs(albums):
                         for i in range(len(r["songs"])):
                                 temp2 = validate_file_name(r["songs"][i]["name"])
 
+                                if "Instrumental" in temp2:                                                                                               # prevents instrumentals from being downloaded
+                                        break
+
                                 r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
 
                                 if ".flac" in r2["sourceUrl"]:
