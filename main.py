@@ -47,19 +47,20 @@ for json_path in json_path_list:
                 json_create = open(json_path, "x", encoding="utf8")
 
 def check_new_albums(data):
-        with open(json_path_list[4], "r", encoding="utf8") as all_albums_list:
+        with open(json_path_list[4], "r", encoding="utf8") as f:
                 for i in data:
-                        if i in all_albums_list.read():
+                        if i in f.read():
                                 return False
                         else:
                                 return True
                 
-all_albums_list_missing = filter(check_new_albums, api_monster_siren_albums_data)
+all_albums_list_missing = list(filter(check_new_albums, api_monster_siren_albums_data))
 
-if len(list(all_albums_list_missing)) > 0:
+if len(all_albums_list_missing) > 0:
         with open(json_path_list[4], encoding="utf-8") as f, open(json_path_list[1], encoding="utf-8") as f2:
                 y = json.load(f)
                 y2 = json.load(f2)
+
                 for i in all_albums_list_missing:
                         y.append(i)
                         y2.append(i)
@@ -144,8 +145,8 @@ def process_songs(albums):
                         for i in range(len(r["songs"])):
                                 temp2 = validate_file_name(r["songs"][i]["name"])
 
-                                if "Instrumental" in temp2:                                                                                               # prevents instrumentals from being downloaded
-                                        break
+                                #if "Instrumental" in temp2:                                                                                               # prevents instrumentals from being downloaded
+                                #        break
 
                                 r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
 
