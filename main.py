@@ -103,80 +103,79 @@ def button_one(self, index, destination):
                 return
 
 def validate_file_name(filename):
-        filename.strip()
-        filename = filename.replace(":", "：")
-        filename = filename.replace("?", "？")
-        filename = filename.replace("%", "％")
-        filename = filename.replace("*", "＊")
-        filename = filename.replace("|", "|")
-        return filename
+        new_name = filename.strip()
+        new_name = new_name.replace(":", "：")
+        new_name = new_name.replace("?", "？")
+        new_name = new_name.replace("%", "％")
+        new_name = new_name.replace("*", "＊")
+        new_name = new_name.replace("|", "|")
+        return new_name
 
 def process_songs(albums):
                 try:
-                        album_path = file_explorer + "/" + validate_file_name(albums[1])
-
+                        album_path = file_explorer + "\\" + validate_file_name(albums[1]) + "\\"
                         if not os.path.exists(album_path):
                                 os.mkdir(album_path)
 
                         r = s.get("https://monster-siren.hypergryph.com/api/album/{}/detail".format(albums[0]), headers={"Content-Type": "application/json"}).json()["data"]
                         
                         if ".png" in r["coverUrl"]:
-                                with open(album_path + "/cover.png", 'wb') as f2:
+                                with open(album_path + "\\cover.png", 'wb') as f2:
                                         f2.write(s.get(r["coverUrl"]).content)
 
                         elif ".jpg" in r["coverUrl"]:
-                                with open(album_path + "/cover.jpg", 'wb') as f2:
+                                with open(album_path + "\\cover.jpg", 'wb') as f2:
                                         f2.write(s.get(r["coverUrl"]).content)
-                                        image_convert = Image.open(album_path + "/cover.jpg")
-                                        image_convert.save(album_path + "/cover.png")
+                                        image_convert = Image.open(album_path + "\\cover.jpg")
+                                        image_convert.save(album_path + "\\cover.png")
 
                         elif ".jpeg" in r["coverUrl"]:
-                                with open(album_path + "/cover.jpeg", 'wb') as f2:
+                                with open(album_path + "\\cover.jpeg", 'wb') as f2:
                                         f2.write(s.get(r["coverUrl"]).content)
-                                        image_convert = Image.open(album_path + "/cover.jpeg")
-                                        image_convert.save(album_path + "/cover.png")
+                                        image_convert = Image.open(album_path + "\\cover.jpeg")
+                                        image_convert.save(album_path + "\\cover.png")
 
                         if ".jpg" in r["coverUrl"]:
-                                os.remove(album_path + "/cover.jpg")
+                                os.remove(album_path + "\\cover.jpg")
                         elif ".jpeg" in r["coverUrl"]:
-                                os.remove(album_path + "/cover.jpeg")
+                                os.remove(album_path + "\\cover.jpeg")
 
 
                         for i in range(len(r["songs"])):
                                 temp2 = validate_file_name(r["songs"][i]["name"])
 
-                                #if "Instrumental" in temp2:                                                                                               # prevents instrumentals from being downloaded
-                                #        break
+                                if "Instrumental" in temp2:                                                                                               # prevents instrumentals from being downloaded
+                                        break
 
                                 r2 = s.get("https://monster-siren.hypergryph.com/api/song/{}".format(r["songs"][i]["cid"]), headers={"Content-Type": "application/json"}).json()["data"]
 
                                 if ".flac" in r2["sourceUrl"]:
-                                        with open(album_path + "/" + temp2 + ".flac", 'wb') as f4:
+                                        with open(album_path + "\\" + temp2 + ".flac", 'wb') as f4:
                                                 f4.write(s.get(r2["sourceUrl"]).content)
-                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".flac", format="flac")
+                                                audio_file = AudioSegment.from_file(album_path + "\\" + temp2 + ".flac", format="flac")
                                 elif ".mp3" in r2["sourceUrl"]:
-                                        with open(album_path + "/" + temp2 + ".mp3", 'wb') as f4:
+                                        with open(album_path + "\\" + temp2 + ".mp3", 'wb') as f4:
                                                 f4.write(s.get(r2["sourceUrl"]).content)
-                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".mp3", format="mp3")
+                                                audio_file = AudioSegment.from_file(album_path + "\\" + temp2 + ".mp3", format="mp3")
                                 elif ".wav" in r2["sourceUrl"]:
-                                        with open(album_path + "/" + temp2 + ".wav", 'wb') as f4:
+                                        with open(album_path + "\\" + temp2 + ".wav", 'wb') as f4:
                                                 f4.write(s.get(r2["sourceUrl"]).content)
-                                                audio_file = AudioSegment.from_file(album_path + "/" + temp2 + ".wav", format="wav")
+                                                audio_file = AudioSegment.from_file(album_path + "\\" + temp2 + ".wav", format="wav")
                                 
-                                audio_modify = audio_file.export(album_path + "/" + temp2 + ".flac", format="flac")
+                                audio_modify = audio_file.export(album_path + "\\" + temp2 + ".flac", format="flac")
 
                                 if ".mp3" in r2["sourceUrl"]:
-                                        os.remove(album_path + "/" + temp2 + ".mp3")
+                                        os.remove(album_path + "\\" + temp2 + ".mp3")
                                 elif ".wav" in r2["sourceUrl"]:
-                                        os.remove(album_path + "/" + temp2 + ".wav")
+                                        os.remove(album_path + "\\" + temp2 + ".wav")
 
-                                audio_flac = FLAC(album_path + "/" + temp2 + ".flac")
+                                audio_flac = FLAC(album_path + "\\" + temp2 + ".flac")
 
                                 image = Picture()
                                 image.type = 3
                                 image.mime = "image/png"
 
-                                with open(album_path + "/cover.png", 'rb') as f5:
+                                with open(album_path + "\\cover.png", 'rb') as f5:
                                         image.data = f5.read()
 
                                 audio_flac.add_picture(image)
