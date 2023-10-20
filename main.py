@@ -104,6 +104,7 @@ def button_one(self, index, destination):
 
 def validate_file_name(filename):
         new_name = filename.strip()
+        new_name = new_name.replace(".", "․")
         new_name = new_name.replace(":", "：")
         new_name = new_name.replace("?", "？")
         new_name = new_name.replace("%", "％")
